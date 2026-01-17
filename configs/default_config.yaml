@@ -1,0 +1,23 @@
+# ASCAM Default Configuration
+
+classifier:
+  model_path: models/best_model.keras
+  image_size: [200, 200]
+  threshold: 0.5
+
+detector:
+  model_path: models/weights.pt
+  conf_threshold: 0.02
+  iou_threshold: 0.30
+  max_detections: 1000
+
+visualization:
+  box_color: [0, 0, 255]  # BGR: Red
+  box_thickness: 10
+  show_count: true
+  show_confidence: false
+
+pipeline:
+  skip_classification: false
+  save_results: true
+  results_format: json  # json or csv
