@@ -2,8 +2,15 @@
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
+
+# Fix TensorFlow/PyTorch conflict on macOS - import PyTorch first
+# and set environment variables before TensorFlow is loaded
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TF info messages
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'  # Disable oneDNN optimizations
+import torch  # noqa: E402 - Must import before TensorFlow
 
 from ascam import __version__
 from ascam.models.classifier import SwellingClassifier
