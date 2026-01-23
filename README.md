@@ -72,6 +72,31 @@ pip install -e .
 ascam --version
 ```
 
+### Download Model Files (Git LFS)
+
+The trained model weights are stored using [Git Large File Storage (LFS)](https://git-lfs.com/). After cloning the repository, you need to download the actual model files:
+
+```bash
+# Install Git LFS (if not already installed)
+# macOS
+brew install git-lfs
+
+# Ubuntu/Debian
+sudo apt-get install git-lfs
+
+# Windows (using Chocolatey)
+choco install git-lfs
+
+# Initialize Git LFS
+git lfs install
+
+# Download the model files
+cd ASCAM
+git lfs pull
+```
+
+**Note:** Without Git LFS, the model files (`models/best_model.keras` and `models/weights.pt`) will be small pointer files instead of the actual models, causing errors when running the pipeline.
+
 ### Install from PyPI (when published)
 
 ```bash
