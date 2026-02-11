@@ -29,7 +29,7 @@ class ASCAMPipeline:
         classifier_threshold: float = 0.5,
         detector_conf: float = 0.25,
         detector_iou: float = 0.50,
-        skip_classification: bool = False
+        skip_classification: bool = False,
     ):
         """
         Initialize the ASCAM pipeline.
@@ -47,8 +47,7 @@ class ASCAMPipeline:
         # Initialize classifier
         if not skip_classification:
             self.classifier = SwellingClassifier(
-                model_path=classifier_path,
-                threshold=classifier_threshold
+                model_path=classifier_path, threshold=classifier_threshold
             )
         else:
             self.classifier = None
@@ -58,14 +57,14 @@ class ASCAMPipeline:
         self.detector = SwellingDetector(
             model_path=detector_path,
             conf_threshold=detector_conf,
-            iou_threshold=detector_iou
+            iou_threshold=detector_iou,
         )
 
     def process_single(
         self,
         image_path: Union[str, Path],
         output_dir: Optional[Union[str, Path]] = None,
-        visualize: bool = True
+        visualize: bool = True,
     ) -> Optional[DetectionResult]:
         """
         Process a single image through the pipeline.
@@ -83,8 +82,7 @@ class ASCAMPipeline:
         # Stage 1: Classification
         if not self.skip_classification:
             has_swelling, prob = self.classifier.predict_single(
-                image_path,
-                return_prob=True
+                image_path, return_prob=True
             )
 
             if not has_swelling:
@@ -101,8 +99,7 @@ class ASCAMPipeline:
             output_path = output_dir / image_path.name
 
             result = self.detector.detect_and_visualize(
-                image_path=image_path,
-                output_path=output_path
+                image_path=image_path, output_path=output_path
             )
         else:
             result = self.detector.detect_single(image_path)
@@ -115,7 +112,7 @@ class ASCAMPipeline:
         output_dir: Union[str, Path],
         visualize: bool = True,
         save_results: bool = True,
-        results_format: str = "json"
+        results_format: str = "json",
     ) -> List[DetectionResult]:
         """
         Process all images in a directory.
@@ -148,7 +145,7 @@ class ASCAMPipeline:
             result = self.process_single(
                 image_path=image_path,
                 output_dir=output_dir if visualize else None,
-                visualize=visualize
+                visualize=visualize,
             )
             if result:
                 all_results.append(result)
@@ -176,56 +173,45 @@ class ASCAMPipeline:
 
         return all_results
 
-    def _save_results_json(
-        self,
-        results: List[DetectionResult],
-        output_path: Path
-    ):
+    def _save_results_json(self, results: List[DetectionResult], output_path: Path):
         """Save results to JSON file."""
         data = {
             "total_images": len(results),
             "total_swellings": sum(r.count for r in results),
-            "results": [r.to_dict() for r in results]
+            "results": [r.to_dict() for r in results],
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"Results saved to {output_path}")
 
-    def _save_results_csv(
-        self,
-        results: List[DetectionResult],
-        output_path: Path
-    ):
+    def _save_results_csv(self, results: List[DetectionResult], output_path: Path):
         """Save results to CSV file."""
-        with open(output_path, 'w', newline='') as f:
+        with open(output_path, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow([
-                "Image Name",
-                "Image Path",
-                "Swelling Count",
-                "Average Confidence"
-            ])
+            writer.writerow(
+                ["Image Name", "Image Path", "Swelling Count", "Average Confidence"]
+            )
 
             for result in results:
                 avg_conf = (
                     sum(result.confidences) / len(result.confidences)
-                    if result.confidences else 0.0
+                    if result.confidences
+                    else 0.0
                 )
-                writer.writerow([
-                    result.image_path.name,
-                    str(result.image_path),
-                    result.count,
-                    f"{avg_conf:.4f}"
-                ])
+                writer.writerow(
+                    [
+                        result.image_path.name,
+                        str(result.image_path),
+                        result.count,
+                        f"{avg_conf:.4f}",
+                    ]
+                )
 
         logger.info(f"Results saved to {output_path}")
 
-    def get_statistics(
-        self,
-        results: List[DetectionResult]
-    ) -> Dict:
+    def get_statistics(self, results: List[DetectionResult]) -> Dict:
         """
         Calculate statistics from detection results.
 
@@ -254,11 +240,13 @@ class ASCAMPipeline:
         }
 
         if confidences:
-            stats.update({
-                "mean_confidence": np.mean(confidences),
-                "median_confidence": np.median(confidences),
-                "min_confidence": min(confidences),
-                "max_confidence": max(confidences),
-            })
+            stats.update(
+                {
+                    "mean_confidence": np.mean(confidences),
+                    "median_confidence": np.median(confidences),
+                    "min_confidence": min(confidences),
+                    "max_confidence": max(confidences),
+                }
+            )
 
         return stats

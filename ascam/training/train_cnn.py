@@ -31,9 +31,11 @@ import timm
 try:
     import albumentations as A
     from albumentations.pytorch import ToTensorV2
+
     ALBUMENTATIONS_AVAILABLE = True
 except ImportError:
     from torchvision import transforms
+
     ALBUMENTATIONS_AVAILABLE = False
 
 from ascam.models.classifier import FocalLoss
@@ -45,25 +47,31 @@ def create_model(
     model_name: str = "efficientnet_b0",
     num_classes: int = 2,
     pretrained: bool = True,
-    dropout: float = 0.3
+    dropout: float = 0.3,
 ) -> nn.Module:
     """Create EfficientNet-B0 model for classification."""
     model = timm.create_model(
-        model_name,
-        pretrained=pretrained,
-        num_classes=num_classes,
-        drop_rate=dropout
+        model_name, pretrained=pretrained, num_classes=num_classes, drop_rate=dropout
     )
-    logger.info(f"Created {model_name} (pretrained={pretrained}, classes={num_classes})")
+    logger.info(
+        f"Created {model_name} (pretrained={pretrained}, classes={num_classes})"
+    )
     return model
 
 
 class SwellingDataset(Dataset):
     """Dataset for swelling classification with flexible folder naming."""
 
-    POSITIVE_NAMES = {'swelling', 'swellings', 'positive', 'pos'}
-    NEGATIVE_NAMES = {'no_swelling', 'no swelling', 'no_swellings',
-                      'negative', 'neg', 'non_swelling', 'non-swelling'}
+    POSITIVE_NAMES = {"swelling", "swellings", "positive", "pos"}
+    NEGATIVE_NAMES = {
+        "no_swelling",
+        "no swelling",
+        "no_swellings",
+        "negative",
+        "neg",
+        "non_swelling",
+        "non-swelling",
+    }
 
     def __init__(self, data_dir: str, transform=None, split_files=None):
         self.data_dir = Path(data_dir)
@@ -83,9 +91,12 @@ class SwellingDataset(Dataset):
             else:
                 continue
 
-            extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
-            files = [f for f in subdir.iterdir()
-                     if f.is_file() and f.suffix.lower() in extensions]
+            extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+            files = [
+                f
+                for f in subdir.iterdir()
+                if f.is_file() and f.suffix.lower() in extensions
+            ]
 
             if split_files is not None:
                 files = [f for f in files if f.name in split_files]
@@ -102,14 +113,14 @@ class SwellingDataset(Dataset):
         return len(self.images)
 
     def __getitem__(self, idx):
-        image = Image.open(str(self.images[idx])).convert('RGB')
+        image = Image.open(str(self.images[idx])).convert("RGB")
         image_np = np.array(image)
         label = self.labels[idx]
 
         if self.transform is not None:
             if ALBUMENTATIONS_AVAILABLE and isinstance(self.transform, A.Compose):
                 transformed = self.transform(image=image_np)
-                image_tensor = transformed['image']
+                image_tensor = transformed["image"]
             else:
                 image_tensor = self.transform(image)
         else:
@@ -125,38 +136,46 @@ def get_transforms(image_size=(224, 224), is_train=False):
 
     if ALBUMENTATIONS_AVAILABLE:
         if is_train:
-            return A.Compose([
-                A.Resize(image_size[0], image_size[1]),
-                A.HorizontalFlip(p=0.5),
-                A.Rotate(limit=45, p=0.5),
-                A.RandomBrightnessContrast(
-                    brightness_limit=0.2, contrast_limit=0.2, p=0.5
-                ),
-                A.Normalize(mean=mean, std=std),
-                ToTensorV2()
-            ])
+            return A.Compose(
+                [
+                    A.Resize(image_size[0], image_size[1]),
+                    A.HorizontalFlip(p=0.5),
+                    A.Rotate(limit=45, p=0.5),
+                    A.RandomBrightnessContrast(
+                        brightness_limit=0.2, contrast_limit=0.2, p=0.5
+                    ),
+                    A.Normalize(mean=mean, std=std),
+                    ToTensorV2(),
+                ]
+            )
         else:
-            return A.Compose([
-                A.Resize(image_size[0], image_size[1]),
-                A.Normalize(mean=mean, std=std),
-                ToTensorV2()
-            ])
+            return A.Compose(
+                [
+                    A.Resize(image_size[0], image_size[1]),
+                    A.Normalize(mean=mean, std=std),
+                    ToTensorV2(),
+                ]
+            )
     else:
         if is_train:
-            return transforms.Compose([
-                transforms.Resize(image_size),
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomRotation(45),
-                transforms.ColorJitter(brightness=0.2, contrast=0.2),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std)
-            ])
+            return transforms.Compose(
+                [
+                    transforms.Resize(image_size),
+                    transforms.RandomHorizontalFlip(),
+                    transforms.RandomRotation(45),
+                    transforms.ColorJitter(brightness=0.2, contrast=0.2),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=mean, std=std),
+                ]
+            )
         else:
-            return transforms.Compose([
-                transforms.Resize(image_size),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std)
-            ])
+            return transforms.Compose(
+                [
+                    transforms.Resize(image_size),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=mean, std=std),
+                ]
+            )
 
 
 def compute_class_weights(dataset: SwellingDataset) -> torch.Tensor:
@@ -182,7 +201,7 @@ class Trainer:
         focal_alpha: float = 0.25,
         focal_gamma: float = 2.0,
         patience: int = 10,
-        device: Optional[str] = None
+        device: Optional[str] = None,
     ):
         self.model = model
         self.epochs = epochs
@@ -191,7 +210,7 @@ class Trainer:
 
         # Device
         self.device = torch.device(
-            device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
+            device if device else ("cuda" if torch.cuda.is_available() else "cpu")
         )
         self.model.to(self.device)
         logger.info(f"Using device: {self.device}")
@@ -216,14 +235,38 @@ class Trainer:
         val_files = {full_dataset.images[i].name for i in val_idx.indices}
         test_files = {full_dataset.images[i].name for i in test_idx.indices}
 
-        train_dataset = SwellingDataset(data_dir, transform=train_transform, split_files=train_files)
-        val_dataset = SwellingDataset(data_dir, transform=val_transform, split_files=val_files)
-        test_dataset = SwellingDataset(data_dir, transform=val_transform, split_files=test_files)
+        train_dataset = SwellingDataset(
+            data_dir, transform=train_transform, split_files=train_files
+        )
+        val_dataset = SwellingDataset(
+            data_dir, transform=val_transform, split_files=val_files
+        )
+        test_dataset = SwellingDataset(
+            data_dir, transform=val_transform, split_files=test_files
+        )
 
         self.dataloaders = {
-            'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True),
-            'val': DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True),
-            'test': DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True),
+            "train": DataLoader(
+                train_dataset,
+                batch_size=batch_size,
+                shuffle=True,
+                num_workers=4,
+                pin_memory=True,
+            ),
+            "val": DataLoader(
+                val_dataset,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=4,
+                pin_memory=True,
+            ),
+            "test": DataLoader(
+                test_dataset,
+                batch_size=batch_size,
+                shuffle=False,
+                num_workers=4,
+                pin_memory=True,
+            ),
         }
 
         # Loss function
@@ -241,19 +284,19 @@ class Trainer:
         )
 
         # Scheduler
-        steps_per_epoch = len(self.dataloaders['train'])
+        steps_per_epoch = len(self.dataloaders["train"])
         total_steps = steps_per_epoch * epochs
         self.scheduler = OneCycleLR(
             self.optimizer,
             max_lr=learning_rate,
             total_steps=total_steps,
             pct_start=5 / epochs,
-            anneal_strategy='cos'
+            anneal_strategy="cos",
         )
 
         # Mixed precision
         self.use_amp = torch.cuda.is_available()
-        self.scaler = torch.amp.GradScaler('cuda') if self.use_amp else None
+        self.scaler = torch.amp.GradScaler("cuda") if self.use_amp else None
 
         # Early stopping
         self.best_val_acc = 0.0
@@ -262,9 +305,11 @@ class Trainer:
 
         # History
         self.history = {
-            'train_loss': [], 'train_acc': [],
-            'val_loss': [], 'val_acc': [],
-            'lr': []
+            "train_loss": [],
+            "train_acc": [],
+            "val_loss": [],
+            "val_acc": [],
+            "lr": [],
         }
 
     def train_epoch(self) -> Tuple[float, float]:
@@ -274,7 +319,7 @@ class Trainer:
         correct = 0
         total = 0
 
-        pbar = tqdm(self.dataloaders['train'], desc='Training', leave=False)
+        pbar = tqdm(self.dataloaders["train"], desc="Training", leave=False)
 
         for images, labels in pbar:
             images = images.to(self.device)
@@ -283,7 +328,7 @@ class Trainer:
             self.optimizer.zero_grad()
 
             if self.use_amp:
-                with torch.amp.autocast('cuda'):
+                with torch.amp.autocast("cuda"):
                     outputs = self.model(images)
                     loss = self.criterion(outputs, labels)
                 self.scaler.scale(loss).backward()
@@ -302,15 +347,14 @@ class Trainer:
             total += labels.size(0)
             correct += predicted.eq(labels).sum().item()
 
-            pbar.set_postfix({
-                'loss': f'{loss.item():.4f}',
-                'acc': f'{100.*correct/total:.2f}%'
-            })
+            pbar.set_postfix(
+                {"loss": f"{loss.item():.4f}", "acc": f"{100.*correct/total:.2f}%"}
+            )
 
         return running_loss / total, correct / total
 
     @torch.no_grad()
-    def validate(self, split: str = 'val') -> Tuple[float, float]:
+    def validate(self, split: str = "val") -> Tuple[float, float]:
         """Validate on val or test set."""
         self.model.eval()
         running_loss = 0.0
@@ -322,7 +366,7 @@ class Trainer:
             labels = labels.to(self.device)
 
             if self.use_amp:
-                with torch.amp.autocast('cuda'):
+                with torch.amp.autocast("cuda"):
                     outputs = self.model(images)
                     loss = self.criterion(outputs, labels)
             else:
@@ -339,17 +383,17 @@ class Trainer:
     def save_checkpoint(self, epoch: int, is_best: bool = False):
         """Save model checkpoint."""
         checkpoint = {
-            'epoch': epoch,
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'best_val_acc': self.best_val_acc,
+            "epoch": epoch,
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "best_val_acc": self.best_val_acc,
         }
 
-        torch.save(checkpoint, self.output_dir / 'checkpoint_latest.pt')
+        torch.save(checkpoint, self.output_dir / "checkpoint_latest.pt")
 
         if is_best:
-            torch.save(checkpoint, self.output_dir / 'checkpoint_best.pt')
-            torch.save(self.model.state_dict(), self.output_dir / 'classifier.pt')
+            torch.save(checkpoint, self.output_dir / "checkpoint_best.pt")
+            torch.save(self.model.state_dict(), self.output_dir / "classifier.pt")
 
     def train(self) -> Dict:
         """Full training loop."""
@@ -364,16 +408,18 @@ class Trainer:
             logger.info(f"\nEpoch {epoch}/{self.epochs}")
 
             train_loss, train_acc = self.train_epoch()
-            val_loss, val_acc = self.validate('val')
-            current_lr = self.optimizer.param_groups[0]['lr']
+            val_loss, val_acc = self.validate("val")
+            current_lr = self.optimizer.param_groups[0]["lr"]
 
-            self.history['train_loss'].append(train_loss)
-            self.history['train_acc'].append(train_acc)
-            self.history['val_loss'].append(val_loss)
-            self.history['val_acc'].append(val_acc)
-            self.history['lr'].append(current_lr)
+            self.history["train_loss"].append(train_loss)
+            self.history["train_acc"].append(train_acc)
+            self.history["val_loss"].append(val_loss)
+            self.history["val_acc"].append(val_acc)
+            self.history["lr"].append(current_lr)
 
-            logger.info(f"  Train Loss: {train_loss:.4f} | Train Acc: {train_acc*100:.2f}%")
+            logger.info(
+                f"  Train Loss: {train_loss:.4f} | Train Acc: {train_acc*100:.2f}%"
+            )
             logger.info(f"  Val Loss:   {val_loss:.4f} | Val Acc:   {val_acc*100:.2f}%")
 
             is_best = val_acc > self.best_val_acc
@@ -391,25 +437,27 @@ class Trainer:
                 break
 
         # Final test evaluation
-        best_weights = self.output_dir / 'classifier.pt'
+        best_weights = self.output_dir / "classifier.pt"
         if best_weights.exists():
-            self.model.load_state_dict(torch.load(best_weights, map_location=self.device))
-        test_loss, test_acc = self.validate('test')
+            self.model.load_state_dict(
+                torch.load(best_weights, map_location=self.device)
+            )
+        test_loss, test_acc = self.validate("test")
 
         logger.info(f"\nTest Loss: {test_loss:.4f} | Test Acc: {test_acc*100:.2f}%")
 
         total_time = time.time() - start_time
 
         results = {
-            'best_val_acc': self.best_val_acc,
-            'test_acc': test_acc,
-            'test_loss': test_loss,
-            'epochs_trained': epoch,
-            'training_time_seconds': total_time,
-            'history': self.history
+            "best_val_acc": self.best_val_acc,
+            "test_acc": test_acc,
+            "test_loss": test_loss,
+            "epochs_trained": epoch,
+            "training_time_seconds": total_time,
+            "history": self.history,
         }
 
-        with open(self.output_dir / 'training_results.json', 'w') as f:
+        with open(self.output_dir / "training_results.json", "w") as f:
             json.dump(results, f, indent=2)
 
         logger.info(f"\nTraining complete in {total_time/60:.1f} minutes")

@@ -27,7 +27,7 @@ def evaluate_thresholds(
     test_images_dir: str,
     conf_range: tuple = (0.01, 0.50, 0.01),
     iou_threshold: float = 0.50,
-    output_dir: Optional[str] = None
+    output_dir: Optional[str] = None,
 ) -> Dict:
     """
     Sweep confidence thresholds and report detection counts.
@@ -47,9 +47,10 @@ def evaluate_thresholds(
     model = YOLO(detector_path)
     test_dir = Path(test_images_dir)
 
-    extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
-    image_files = [f for f in test_dir.iterdir()
-                   if f.is_file() and f.suffix.lower() in extensions]
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+    image_files = [
+        f for f in test_dir.iterdir() if f.is_file() and f.suffix.lower() in extensions
+    ]
 
     if not image_files:
         logger.error(f"No images found in {test_dir}")
@@ -69,10 +70,7 @@ def evaluate_thresholds(
 
         for img_path in image_files:
             preds = model.predict(
-                source=str(img_path),
-                conf=conf,
-                iou=iou_threshold,
-                verbose=False
+                source=str(img_path), conf=conf, iou=iou_threshold, verbose=False
             )[0]
 
             n_det = len(preds.boxes) if preds.boxes is not None else 0
@@ -81,11 +79,11 @@ def evaluate_thresholds(
                 images_with_detections += 1
 
         result = {
-            'conf_threshold': conf,
-            'total_detections': total_detections,
-            'images_with_detections': images_with_detections,
-            'total_images': len(image_files),
-            'mean_detections_per_image': total_detections / len(image_files)
+            "conf_threshold": conf,
+            "total_detections": total_detections,
+            "images_with_detections": images_with_detections,
+            "total_images": len(image_files),
+            "mean_detections_per_image": total_detections / len(image_files),
         }
         results.append(result)
 
@@ -95,15 +93,15 @@ def evaluate_thresholds(
         )
 
     sweep_results = {
-        'iou_threshold': iou_threshold,
-        'image_count': len(image_files),
-        'sweep': results
+        "iou_threshold": iou_threshold,
+        "image_count": len(image_files),
+        "sweep": results,
     }
 
     if output_dir:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        with open(output_dir / 'threshold_sweep.json', 'w') as f:
+        with open(output_dir / "threshold_sweep.json", "w") as f:
             json.dump(sweep_results, f, indent=2)
         logger.info(f"Results saved to {output_dir / 'threshold_sweep.json'}")
 
@@ -111,9 +109,7 @@ def evaluate_thresholds(
 
 
 def evaluate_classifier(
-    classifier_path: str,
-    test_dir: str,
-    output_dir: Optional[str] = None
+    classifier_path: str, test_dir: str, output_dir: Optional[str] = None
 ) -> Dict:
     """
     Evaluate CNN classifier on test data.
@@ -140,9 +136,16 @@ def evaluate_classifier(
             continue
 
         name_lower = subdir.name.lower().strip()
-        positive_names = {'swelling', 'swellings', 'positive', 'pos'}
-        negative_names = {'no_swelling', 'no swelling', 'no_swellings',
-                          'negative', 'neg', 'non_swelling', 'non-swelling'}
+        positive_names = {"swelling", "swellings", "positive", "pos"}
+        negative_names = {
+            "no_swelling",
+            "no swelling",
+            "no_swellings",
+            "negative",
+            "neg",
+            "non_swelling",
+            "non-swelling",
+        }
 
         if name_lower in positive_names:
             true_label = 1
@@ -151,7 +154,7 @@ def evaluate_classifier(
         else:
             continue
 
-        extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
+        extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
         for img_path in subdir.iterdir():
             if img_path.suffix.lower() not in extensions:
                 continue
@@ -171,17 +174,21 @@ def evaluate_classifier(
 
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+    f1 = (
+        2 * precision * recall / (precision + recall)
+        if (precision + recall) > 0
+        else 0.0
+    )
 
     metrics = {
-        'accuracy': float(accuracy),
-        'precision': float(precision),
-        'recall': float(recall),
-        'f1_score': float(f1),
-        'total_samples': len(true_labels),
-        'true_positives': int(tp),
-        'false_positives': int(fp),
-        'false_negatives': int(fn)
+        "accuracy": float(accuracy),
+        "precision": float(precision),
+        "recall": float(recall),
+        "f1_score": float(f1),
+        "total_samples": len(true_labels),
+        "true_positives": int(tp),
+        "false_positives": int(fp),
+        "false_negatives": int(fn),
     }
 
     logger.info(f"Classifier Evaluation:")
@@ -193,7 +200,7 @@ def evaluate_classifier(
     if output_dir:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
-        with open(output_dir / 'classifier_metrics.json', 'w') as f:
+        with open(output_dir / "classifier_metrics.json", "w") as f:
             json.dump(metrics, f, indent=2)
 
     return metrics
@@ -201,14 +208,17 @@ def evaluate_classifier(
 
 def main():
     """CLI entry point for evaluation."""
-    parser = argparse.ArgumentParser(description='ASCAM Evaluation')
-    parser.add_argument('--classifier', help='Path to CNN model weights')
-    parser.add_argument('--detector', help='Path to YOLO model weights')
-    parser.add_argument('--data', required=True, help='Path to test data directory')
-    parser.add_argument('--output', default='./evaluation', help='Output directory')
+    parser = argparse.ArgumentParser(description="ASCAM Evaluation")
+    parser.add_argument("--classifier", help="Path to CNN model weights")
+    parser.add_argument("--detector", help="Path to YOLO model weights")
+    parser.add_argument("--data", required=True, help="Path to test data directory")
+    parser.add_argument("--output", default="./evaluation", help="Output directory")
     parser.add_argument(
-        '--sweep-conf', nargs=3, type=float, metavar=('START', 'STOP', 'STEP'),
-        help='Confidence threshold sweep range (e.g., 0.01 0.50 0.01)'
+        "--sweep-conf",
+        nargs=3,
+        type=float,
+        metavar=("START", "STOP", "STEP"),
+        help="Confidence threshold sweep range (e.g., 0.01 0.50 0.01)",
     )
 
     args = parser.parse_args()
@@ -220,14 +230,12 @@ def main():
             detector_path=args.detector,
             test_images_dir=args.data,
             conf_range=tuple(args.sweep_conf),
-            output_dir=args.output
+            output_dir=args.output,
         )
 
     if args.classifier:
         evaluate_classifier(
-            classifier_path=args.classifier,
-            test_dir=args.data,
-            output_dir=args.output
+            classifier_path=args.classifier, test_dir=args.data, output_dir=args.output
         )
 
 

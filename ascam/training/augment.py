@@ -39,11 +39,7 @@ class SafeAugmentor:
         transforms = []
         for rot in self.rotations:
             for h_flip in self.h_flips:
-                transforms.append({
-                    'rotation': rot,
-                    'h_flip': h_flip,
-                    'v_flip': False
-                })
+                transforms.append({"rotation": rot, "h_flip": h_flip, "v_flip": False})
         return transforms
 
     def get_intensity_transforms(self) -> List[dict]:
@@ -51,27 +47,24 @@ class SafeAugmentor:
         transforms = []
         for brightness in self.brightness_deltas:
             for contrast in self.contrast_factors:
-                transforms.append({
-                    'brightness': brightness,
-                    'contrast': contrast
-                })
+                transforms.append({"brightness": brightness, "contrast": contrast})
         return transforms
 
     def apply_geometric(self, image: np.ndarray, transform: dict) -> np.ndarray:
         """Apply geometric transforms to image."""
         img = image.copy()
 
-        if transform['rotation'] == 90:
+        if transform["rotation"] == 90:
             img = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-        elif transform['rotation'] == 180:
+        elif transform["rotation"] == 180:
             img = cv2.rotate(img, cv2.ROTATE_180)
-        elif transform['rotation'] == 270:
+        elif transform["rotation"] == 270:
             img = cv2.rotate(img, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-        if transform['h_flip']:
+        if transform["h_flip"]:
             img = cv2.flip(img, 1)
 
-        if transform.get('v_flip', False):
+        if transform.get("v_flip", False):
             img = cv2.flip(img, 0)
 
         return img
@@ -80,20 +73,24 @@ class SafeAugmentor:
         """Apply intensity transforms to image."""
         img = image.astype(np.float32)
 
-        if transform['brightness'] != 0:
-            img = img + (transform['brightness'] * 255)
+        if transform["brightness"] != 0:
+            img = img + (transform["brightness"] * 255)
 
-        if transform['contrast'] != 1.0:
+        if transform["contrast"] != 1.0:
             mean = img.mean()
-            img = (img - mean) * transform['contrast'] + mean
+            img = (img - mean) * transform["contrast"] + mean
 
         return np.clip(img, 0, 255).astype(np.uint8)
 
 
 def transform_bbox(
-    x_center: float, y_center: float,
-    width: float, height: float,
-    rotation: int, h_flip: bool, v_flip: bool
+    x_center: float,
+    y_center: float,
+    width: float,
+    height: float,
+    rotation: int,
+    h_flip: bool,
+    v_flip: bool,
 ) -> Tuple[float, float, float, float]:
     """
     Transform YOLO bbox coordinates based on geometric transforms.
@@ -121,10 +118,7 @@ def transform_bbox(
 
 
 def augment_dataset(
-    input_dir: str,
-    output_dir: str,
-    multiplier: int = 10,
-    seed: int = 42
+    input_dir: str, output_dir: str, multiplier: int = 10, seed: int = 42
 ) -> dict:
     """
     Augment all images in a directory (CNN data).
@@ -142,16 +136,19 @@ def augment_dataset(
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
-    image_files = [f for f in input_dir.iterdir()
-                   if f.is_file() and f.suffix.lower() in extensions]
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+    image_files = [
+        f for f in input_dir.iterdir() if f.is_file() and f.suffix.lower() in extensions
+    ]
 
     logger.info(f"Found {len(image_files)} images, target: ~{multiplier}x")
 
     augmentor = SafeAugmentor(seed=seed)
     geo_transforms = augmentor.get_geometric_transforms()
     int_transforms = augmentor.get_intensity_transforms()
-    all_combinations = list(product(enumerate(geo_transforms), enumerate(int_transforms)))
+    all_combinations = list(
+        product(enumerate(geo_transforms), enumerate(int_transforms))
+    )
 
     total_created = 0
 
@@ -173,16 +170,20 @@ def augment_dataset(
             stem = img_path.stem
             suffix = img_path.suffix
             out_name = f"{stem}_aug_g{geo_idx}_i{int_idx}{suffix}"
-            cv2.imwrite(str(output_dir / out_name), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(
+                str(output_dir / out_name), cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR)
+            )
             total_created += 1
 
     summary = {
-        'original_images': len(image_files),
-        'augmented_images': total_created,
-        'multiplier_achieved': total_created / len(image_files) if image_files else 0
+        "original_images": len(image_files),
+        "augmented_images": total_created,
+        "multiplier_achieved": total_created / len(image_files) if image_files else 0,
     }
 
-    logger.info(f"Augmentation complete: {total_created} images created ({summary['multiplier_achieved']:.1f}x)")
+    logger.info(
+        f"Augmentation complete: {total_created} images created ({summary['multiplier_achieved']:.1f}x)"
+    )
     return summary
 
 
@@ -192,7 +193,7 @@ def augment_yolo_dataset(
     output_images_dir: str,
     output_labels_dir: str,
     multiplier: int = 10,
-    seed: int = 42
+    seed: int = 42,
 ) -> dict:
     """
     Augment YOLO dataset (images + labels together).
@@ -216,11 +217,11 @@ def augment_yolo_dataset(
     output_images_dir.mkdir(parents=True, exist_ok=True)
     output_labels_dir.mkdir(parents=True, exist_ok=True)
 
-    extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
+    extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
     pairs = []
     for img_path in images_dir.iterdir():
         if img_path.suffix.lower() in extensions:
-            label_path = labels_dir / (img_path.stem + '.txt')
+            label_path = labels_dir / (img_path.stem + ".txt")
             if label_path.exists():
                 pairs.append((img_path, label_path))
 
@@ -229,7 +230,9 @@ def augment_yolo_dataset(
     augmentor = SafeAugmentor(seed=seed)
     geo_transforms = augmentor.get_geometric_transforms()
     int_transforms = augmentor.get_intensity_transforms()
-    all_combinations = list(product(enumerate(geo_transforms), enumerate(int_transforms)))
+    all_combinations = list(
+        product(enumerate(geo_transforms), enumerate(int_transforms))
+    )
 
     total_created = 0
 
@@ -256,24 +259,31 @@ def augment_yolo_dataset(
                 cls_id = label[0]
                 x_center, y_center, bw, bh = map(float, label[1:5])
                 new_x, new_y, new_w, new_h = transform_bbox(
-                    x_center, y_center, bw, bh,
-                    geo_t['rotation'], geo_t['h_flip'], geo_t.get('v_flip', False)
+                    x_center,
+                    y_center,
+                    bw,
+                    bh,
+                    geo_t["rotation"],
+                    geo_t["h_flip"],
+                    geo_t.get("v_flip", False),
                 )
-                aug_labels.append(f"{cls_id} {new_x:.6f} {new_y:.6f} {new_w:.6f} {new_h:.6f}")
+                aug_labels.append(
+                    f"{cls_id} {new_x:.6f} {new_y:.6f} {new_w:.6f} {new_h:.6f}"
+                )
 
             out_name = f"{img_path.stem}_aug_g{geo_idx}_i{int_idx}"
             cv2.imwrite(
                 str(output_images_dir / f"{out_name}{img_path.suffix}"),
-                cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR)
+                cv2.cvtColor(aug_image, cv2.COLOR_RGB2BGR),
             )
-            with open(output_labels_dir / f"{out_name}.txt", 'w') as f:
-                f.write('\n'.join(aug_labels))
+            with open(output_labels_dir / f"{out_name}.txt", "w") as f:
+                f.write("\n".join(aug_labels))
             total_created += 1
 
     summary = {
-        'original_pairs': len(pairs),
-        'augmented_pairs': total_created,
-        'multiplier_achieved': total_created / len(pairs) if pairs else 0
+        "original_pairs": len(pairs),
+        "augmented_pairs": total_created,
+        "multiplier_achieved": total_created / len(pairs) if pairs else 0,
     }
 
     logger.info(f"YOLO augmentation complete: {total_created} pairs created")

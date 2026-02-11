@@ -13,9 +13,11 @@ from PIL import Image
 try:
     import albumentations as A
     from albumentations.pytorch import ToTensorV2
+
     ALBUMENTATIONS_AVAILABLE = True
 except ImportError:
     from torchvision import transforms
+
     ALBUMENTATIONS_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -27,20 +29,22 @@ class FocalLoss(nn.Module):
     FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
     """
 
-    def __init__(self, alpha: float = 0.25, gamma: float = 2.0, reduction: str = 'mean'):
+    def __init__(
+        self, alpha: float = 0.25, gamma: float = 2.0, reduction: str = "mean"
+    ):
         super().__init__()
         self.alpha = alpha
         self.gamma = gamma
         self.reduction = reduction
 
     def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        ce_loss = nn.functional.cross_entropy(inputs, targets, reduction='none')
+        ce_loss = nn.functional.cross_entropy(inputs, targets, reduction="none")
         pt = torch.exp(-ce_loss)
         focal_loss = self.alpha * (1 - pt) ** self.gamma * ce_loss
 
-        if self.reduction == 'mean':
+        if self.reduction == "mean":
             return focal_loss.mean()
-        elif self.reduction == 'sum':
+        elif self.reduction == "sum":
             return focal_loss.sum()
         return focal_loss
 
@@ -63,7 +67,7 @@ class SwellingClassifier:
         threshold: float = 0.5,
         model_name: str = "efficientnet_b0",
         num_classes: int = 2,
-        device: Optional[str] = None
+        device: Optional[str] = None,
     ):
         """
         Initialize the classifier.
@@ -82,7 +86,7 @@ class SwellingClassifier:
         self.model_name = model_name
         self.num_classes = num_classes
         self.device = torch.device(
-            device if device else ('cuda' if torch.cuda.is_available() else 'cpu')
+            device if device else ("cuda" if torch.cuda.is_available() else "cpu")
         )
         self.model = None
         self.transform = None
@@ -94,19 +98,19 @@ class SwellingClassifier:
         """Load the PyTorch model from file."""
         try:
             self.model = timm.create_model(
-                self.model_name,
-                pretrained=False,
-                num_classes=self.num_classes
+                self.model_name, pretrained=False, num_classes=self.num_classes
             )
 
             state_dict = torch.load(str(self.model_path), map_location=self.device)
-            if isinstance(state_dict, dict) and 'model_state_dict' in state_dict:
-                state_dict = state_dict['model_state_dict']
+            if isinstance(state_dict, dict) and "model_state_dict" in state_dict:
+                state_dict = state_dict["model_state_dict"]
             self.model.load_state_dict(state_dict)
 
             self.model.to(self.device)
             self.model.eval()
-            logger.info(f"Classifier model loaded from {self.model_path} on {self.device}")
+            logger.info(
+                f"Classifier model loaded from {self.model_path} on {self.device}"
+            )
         except Exception as e:
             logger.error(f"Failed to load classifier model: {e}")
             raise
@@ -117,27 +121,31 @@ class SwellingClassifier:
         std = [0.229, 0.224, 0.225]
 
         if ALBUMENTATIONS_AVAILABLE:
-            self.transform = A.Compose([
-                A.Resize(self.image_size[0], self.image_size[1]),
-                A.Normalize(mean=mean, std=std),
-                ToTensorV2()
-            ])
+            self.transform = A.Compose(
+                [
+                    A.Resize(self.image_size[0], self.image_size[1]),
+                    A.Normalize(mean=mean, std=std),
+                    ToTensorV2(),
+                ]
+            )
         else:
-            self.transform = transforms.Compose([
-                transforms.Resize(self.image_size),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=mean, std=std)
-            ])
+            self.transform = transforms.Compose(
+                [
+                    transforms.Resize(self.image_size),
+                    transforms.ToTensor(),
+                    transforms.Normalize(mean=mean, std=std),
+                ]
+            )
 
     def _preprocess_image(self, image_path: Union[str, Path]) -> Optional[torch.Tensor]:
         """Load and preprocess a single image."""
         try:
-            image = Image.open(str(image_path)).convert('RGB')
+            image = Image.open(str(image_path)).convert("RGB")
             image_np = np.array(image)
 
             if ALBUMENTATIONS_AVAILABLE:
                 transformed = self.transform(image=image_np)
-                tensor = transformed['image']
+                tensor = transformed["image"]
             else:
                 tensor = self.transform(image)
 
@@ -148,9 +156,7 @@ class SwellingClassifier:
 
     @torch.no_grad()
     def predict_single(
-        self,
-        image_path: Union[str, Path],
-        return_prob: bool = False
+        self, image_path: Union[str, Path], return_prob: bool = False
     ) -> Union[bool, Tuple[bool, float]]:
         """
         Predict if a single image contains swellings.
@@ -174,7 +180,7 @@ class SwellingClassifier:
         # class 1 = swelling, class 0 = no_swelling
         pred_class = probs.argmax(dim=1).item()
         confidence = probs[0, pred_class].item()
-        has_swelling = (pred_class == 1)
+        has_swelling = pred_class == 1
 
         logger.info(
             f"Image: {Path(image_path).name} | "
@@ -191,7 +197,7 @@ class SwellingClassifier:
         self,
         image_paths: List[Union[str, Path]],
         return_probs: bool = False,
-        batch_size: int = 32
+        batch_size: int = 32,
     ) -> Union[List[bool], List[Tuple[bool, float]]]:
         """
         Predict for multiple images using true batched inference.
@@ -207,7 +213,7 @@ class SwellingClassifier:
         results = []
 
         for i in range(0, len(image_paths), batch_size):
-            chunk_paths = image_paths[i:i + batch_size]
+            chunk_paths = image_paths[i : i + batch_size]
             tensors = []
             valid_indices = []
 
@@ -231,7 +237,7 @@ class SwellingClassifier:
                     if j in valid_indices:
                         pred_class = pred_classes[tensor_idx].item()
                         confidence = probs[tensor_idx, pred_class].item()
-                        has_swelling = (pred_class == 1)
+                        has_swelling = pred_class == 1
                         tensor_idx += 1
 
                         if return_probs:
@@ -252,10 +258,7 @@ class SwellingClassifier:
 
         return results
 
-    def filter_positive_images(
-        self,
-        image_paths: List[Union[str, Path]]
-    ) -> List[Path]:
+    def filter_positive_images(self, image_paths: List[Union[str, Path]]) -> List[Path]:
         """
         Filter images that are predicted to contain swellings.
 
@@ -281,7 +284,7 @@ def build_classifier_model(
     model_name: str = "efficientnet_b0",
     num_classes: int = 2,
     pretrained: bool = True,
-    dropout: float = 0.3
+    dropout: float = 0.3,
 ) -> nn.Module:
     """
     Build the EfficientNet-B0 model for binary classification.
@@ -296,9 +299,6 @@ def build_classifier_model(
         PyTorch model
     """
     model = timm.create_model(
-        model_name,
-        pretrained=pretrained,
-        num_classes=num_classes,
-        drop_rate=dropout
+        model_name, pretrained=pretrained, num_classes=num_classes, drop_rate=dropout
     )
     return model

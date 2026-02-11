@@ -18,8 +18,8 @@ def setup_logging(verbose: bool = False):
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
 
@@ -31,10 +31,7 @@ def cmd_classify(args):
     logger.info("Running classification...")
 
     # Initialize classifier
-    classifier = SwellingClassifier(
-        model_path=args.model,
-        threshold=args.threshold
-    )
+    classifier = SwellingClassifier(model_path=args.model, threshold=args.threshold)
 
     # Get input images
     if Path(args.input).is_dir():
@@ -60,8 +57,10 @@ def cmd_classify(args):
             positive_count += 1
 
     logger.info("-" * 60)
-    logger.info(f"Total: {len(image_files)} | Positive: {positive_count} | "
-                f"Negative: {len(image_files) - positive_count}")
+    logger.info(
+        f"Total: {len(image_files)} | Positive: {positive_count} | "
+        f"Negative: {len(image_files) - positive_count}"
+    )
 
 
 def cmd_detect(args):
@@ -76,7 +75,7 @@ def cmd_detect(args):
         model_path=args.model,
         conf_threshold=args.conf,
         iou_threshold=args.iou,
-        max_detections=args.max_det
+        max_detections=args.max_det,
     )
 
     # Create output directory
@@ -102,7 +101,7 @@ def cmd_detect(args):
             image_path=img_path,
             output_path=output_dir / img_path.name,
             show_count=not args.no_count,
-            show_confidence=args.show_conf
+            show_confidence=args.show_conf,
         )
         total_swellings += result.count
 
@@ -126,20 +125,24 @@ def cmd_pipeline(args):
 
     # Override config with command-line arguments
     if args.classifier:
-        config.set('classifier.model_path', args.classifier)
+        config.set("classifier.model_path", args.classifier)
     if args.detector:
-        config.set('detector.model_path', args.detector)
+        config.set("detector.model_path", args.detector)
     if args.skip_classify:
-        config.set('pipeline.skip_classification', True)
+        config.set("pipeline.skip_classification", True)
 
     # Initialize pipeline
     pipeline = ASCAMPipeline(
-        classifier_path=config.get('classifier.model_path'),
-        detector_path=config.get('detector.model_path'),
-        classifier_threshold=config.get('classifier.threshold', 0.5),
-        detector_conf=args.conf if args.conf else config.get('detector.conf_threshold', 0.25),
-        detector_iou=args.iou if args.iou else config.get('detector.iou_threshold', 0.50),
-        skip_classification=config.get('pipeline.skip_classification', False)
+        classifier_path=config.get("classifier.model_path"),
+        detector_path=config.get("detector.model_path"),
+        classifier_threshold=config.get("classifier.threshold", 0.5),
+        detector_conf=args.conf
+        if args.conf
+        else config.get("detector.conf_threshold", 0.25),
+        detector_iou=args.iou
+        if args.iou
+        else config.get("detector.iou_threshold", 0.50),
+        skip_classification=config.get("pipeline.skip_classification", False),
     )
 
     # Process directory
@@ -148,7 +151,7 @@ def cmd_pipeline(args):
         output_dir=args.output,
         visualize=not args.no_visualize,
         save_results=True,
-        results_format=args.format
+        results_format=args.format,
     )
 
     # Print statistics
@@ -157,7 +160,11 @@ def cmd_pipeline(args):
         logger.info("\nStatistics:")
         logger.info("-" * 60)
         for key, value in stats.items():
-            logger.info(f"{key:30}: {value:.2f}" if isinstance(value, float) else f"{key:30}: {value}")
+            logger.info(
+                f"{key:30}: {value:.2f}"
+                if isinstance(value, float)
+                else f"{key:30}: {value}"
+            )
 
 
 def cmd_config(args):
@@ -184,10 +191,7 @@ def cmd_train_cnn(args):
 
     # Create model
     model = create_model(
-        model_name=args.model_name,
-        num_classes=2,
-        pretrained=True,
-        dropout=args.dropout
+        model_name=args.model_name, num_classes=2, pretrained=True, dropout=args.dropout
     )
 
     # Create trainer and train
@@ -199,7 +203,7 @@ def cmd_train_cnn(args):
         batch_size=args.batch_size,
         learning_rate=args.lr,
         use_focal_loss=True,
-        device=args.device
+        device=args.device,
     )
     trainer.train()
 
@@ -221,7 +225,7 @@ def cmd_train_yolo(args):
         output_dir=args.output,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        device=args.device
+        device=args.device,
     )
 
 
@@ -249,277 +253,205 @@ Examples:
 
   # Train YOLO detector
   ascam train-yolo --data data/detection/data.yaml --epochs 500 --output models/
-        """
+        """,
     )
 
-    parser.add_argument('--version', action='version', version=f'ASCAM {__version__}')
+    parser.add_argument("--version", action="version", version=f"ASCAM {__version__}")
 
-    subparsers = parser.add_subparsers(dest='command', help='Available commands')
+    subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # Classify command
     classify_parser = subparsers.add_parser(
-        'classify',
-        help='Run binary classification on images'
+        "classify", help="Run binary classification on images"
     )
     classify_parser.add_argument(
-        '--input', '-i',
-        required=True,
-        help='Input image or directory'
+        "--input", "-i", required=True, help="Input image or directory"
     )
     classify_parser.add_argument(
-        '--model', '-m',
-        required=True,
-        help='Path to classification model (.pt)'
+        "--model", "-m", required=True, help="Path to classification model (.pt)"
     )
     classify_parser.add_argument(
-        '--threshold', '-t',
+        "--threshold",
+        "-t",
         type=float,
         default=0.5,
-        help='Classification threshold (default: 0.5)'
+        help="Classification threshold (default: 0.5)",
     )
     classify_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     classify_parser.set_defaults(func=cmd_classify)
 
     # Detect command
     detect_parser = subparsers.add_parser(
-        'detect',
-        help='Run object detection on images'
+        "detect", help="Run object detection on images"
     )
     detect_parser.add_argument(
-        '--input', '-i',
-        required=True,
-        help='Input image or directory'
+        "--input", "-i", required=True, help="Input image or directory"
     )
     detect_parser.add_argument(
-        '--output', '-o',
-        required=True,
-        help='Output directory for results'
+        "--output", "-o", required=True, help="Output directory for results"
     )
     detect_parser.add_argument(
-        '--model', '-m',
-        required=True,
-        help='Path to detection model (.pt)'
+        "--model", "-m", required=True, help="Path to detection model (.pt)"
     )
     detect_parser.add_argument(
-        '--conf',
-        type=float,
-        default=0.25,
-        help='Confidence threshold (default: 0.25)'
+        "--conf", type=float, default=0.25, help="Confidence threshold (default: 0.25)"
     )
     detect_parser.add_argument(
-        '--iou',
-        type=float,
-        default=0.50,
-        help='IOU threshold for NMS (default: 0.50)'
+        "--iou", type=float, default=0.50, help="IOU threshold for NMS (default: 0.50)"
     )
     detect_parser.add_argument(
-        '--max-det',
+        "--max-det",
         type=int,
         default=1000,
-        help='Maximum detections per image (default: 1000)'
+        help="Maximum detections per image (default: 1000)",
     )
     detect_parser.add_argument(
-        '--no-count',
-        action='store_true',
-        help='Do not show count on images'
+        "--no-count", action="store_true", help="Do not show count on images"
     )
     detect_parser.add_argument(
-        '--show-conf',
-        action='store_true',
-        help='Show confidence scores on boxes'
+        "--show-conf", action="store_true", help="Show confidence scores on boxes"
     )
     detect_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     detect_parser.set_defaults(func=cmd_detect)
 
     # Pipeline command
     pipeline_parser = subparsers.add_parser(
-        'pipeline',
-        help='Run complete classification + detection pipeline'
+        "pipeline", help="Run complete classification + detection pipeline"
     )
     pipeline_parser.add_argument(
-        '--input', '-i',
-        required=True,
-        help='Input directory containing images'
+        "--input", "-i", required=True, help="Input directory containing images"
     )
     pipeline_parser.add_argument(
-        '--output', '-o',
-        required=True,
-        help='Output directory for results'
+        "--output", "-o", required=True, help="Output directory for results"
     )
     pipeline_parser.add_argument(
-        '--config', '-c',
-        help='Path to configuration YAML file'
+        "--config", "-c", help="Path to configuration YAML file"
     )
     pipeline_parser.add_argument(
-        '--classifier',
-        help='Path to classification model (overrides config)'
+        "--classifier", help="Path to classification model (overrides config)"
     )
     pipeline_parser.add_argument(
-        '--detector',
-        help='Path to detection model (overrides config)'
+        "--detector", help="Path to detection model (overrides config)"
     )
     pipeline_parser.add_argument(
-        '--skip-classify',
-        action='store_true',
-        help='Skip classification stage'
+        "--skip-classify", action="store_true", help="Skip classification stage"
     )
     pipeline_parser.add_argument(
-        '--conf',
-        type=float,
-        help='Detection confidence threshold (overrides config)'
+        "--conf", type=float, help="Detection confidence threshold (overrides config)"
     )
     pipeline_parser.add_argument(
-        '--iou',
-        type=float,
-        help='Detection IOU threshold (overrides config)'
+        "--iou", type=float, help="Detection IOU threshold (overrides config)"
     )
     pipeline_parser.add_argument(
-        '--no-visualize',
-        action='store_true',
-        help='Do not save annotated images'
+        "--no-visualize", action="store_true", help="Do not save annotated images"
     )
     pipeline_parser.add_argument(
-        '--format', '-f',
-        choices=['json', 'csv'],
-        default='json',
-        help='Results file format (default: json)'
+        "--format",
+        "-f",
+        choices=["json", "csv"],
+        default="json",
+        help="Results file format (default: json)",
     )
     pipeline_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     pipeline_parser.set_defaults(func=cmd_pipeline)
 
     # Config command
     config_parser = subparsers.add_parser(
-        'config',
-        help='Generate default configuration file'
+        "config", help="Generate default configuration file"
     )
     config_parser.add_argument(
-        '--output', '-o',
-        default='config.yaml',
-        help='Output path for config file (default: config.yaml)'
+        "--output",
+        "-o",
+        default="config.yaml",
+        help="Output path for config file (default: config.yaml)",
     )
     config_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     config_parser.set_defaults(func=cmd_config)
 
     # Train CNN command
     train_cnn_parser = subparsers.add_parser(
-        'train-cnn',
-        help='Train CNN classifier (EfficientNet-B0)'
+        "train-cnn", help="Train CNN classifier (EfficientNet-B0)"
     )
     train_cnn_parser.add_argument(
-        '--data', '-d',
-        required=True,
-        help='Path to classifier training data directory'
+        "--data", "-d", required=True, help="Path to classifier training data directory"
     )
     train_cnn_parser.add_argument(
-        '--output', '-o',
-        default='models/',
-        help='Output directory for trained model (default: models/)'
+        "--output",
+        "-o",
+        default="models/",
+        help="Output directory for trained model (default: models/)",
     )
     train_cnn_parser.add_argument(
-        '--epochs', '-e',
+        "--epochs",
+        "-e",
         type=int,
         default=50,
-        help='Number of training epochs (default: 50)'
+        help="Number of training epochs (default: 50)",
     )
     train_cnn_parser.add_argument(
-        '--batch-size', '-b',
-        type=int,
-        default=32,
-        help='Batch size (default: 32)'
+        "--batch-size", "-b", type=int, default=32, help="Batch size (default: 32)"
     )
     train_cnn_parser.add_argument(
-        '--lr',
-        type=float,
-        default=1e-4,
-        help='Learning rate (default: 0.0001)'
+        "--lr", type=float, default=1e-4, help="Learning rate (default: 0.0001)"
     )
     train_cnn_parser.add_argument(
-        '--dropout',
-        type=float,
-        default=0.3,
-        help='Dropout rate (default: 0.3)'
+        "--dropout", type=float, default=0.3, help="Dropout rate (default: 0.3)"
     )
     train_cnn_parser.add_argument(
-        '--model-name',
-        default='efficientnet_b0',
-        help='timm model name (default: efficientnet_b0)'
+        "--model-name",
+        default="efficientnet_b0",
+        help="timm model name (default: efficientnet_b0)",
     )
     train_cnn_parser.add_argument(
-        '--seed',
-        type=int,
-        default=42,
-        help='Random seed (default: 42)'
+        "--seed", type=int, default=42, help="Random seed (default: 42)"
     )
     train_cnn_parser.add_argument(
-        '--device',
-        default=None,
-        help='Device to use (default: auto-detect)'
+        "--device", default=None, help="Device to use (default: auto-detect)"
     )
     train_cnn_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     train_cnn_parser.set_defaults(func=cmd_train_cnn)
 
     # Train YOLO command
     train_yolo_parser = subparsers.add_parser(
-        'train-yolo',
-        help='Train YOLO detector (YOLOv8s)'
+        "train-yolo", help="Train YOLO detector (YOLOv8s)"
     )
     train_yolo_parser.add_argument(
-        '--data', '-d',
-        required=True,
-        help='Path to data.yaml for YOLO training'
+        "--data", "-d", required=True, help="Path to data.yaml for YOLO training"
     )
     train_yolo_parser.add_argument(
-        '--output', '-o',
-        default='models/',
-        help='Output directory for trained model (default: models/)'
+        "--output",
+        "-o",
+        default="models/",
+        help="Output directory for trained model (default: models/)",
     )
     train_yolo_parser.add_argument(
-        '--epochs', '-e',
+        "--epochs",
+        "-e",
         type=int,
         default=500,
-        help='Number of training epochs (default: 500)'
+        help="Number of training epochs (default: 500)",
     )
     train_yolo_parser.add_argument(
-        '--batch-size', '-b',
-        type=int,
-        default=16,
-        help='Batch size (default: 16)'
+        "--batch-size", "-b", type=int, default=16, help="Batch size (default: 16)"
     )
     train_yolo_parser.add_argument(
-        '--seed',
-        type=int,
-        default=42,
-        help='Random seed (default: 42)'
+        "--seed", type=int, default=42, help="Random seed (default: 42)"
     )
     train_yolo_parser.add_argument(
-        '--device',
-        default=None,
-        help='Device to use (default: auto-detect)'
+        "--device", default=None, help="Device to use (default: auto-detect)"
     )
     train_yolo_parser.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Enable verbose output'
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
     )
     train_yolo_parser.set_defaults(func=cmd_train_yolo)
 
@@ -534,5 +466,5 @@ Examples:
     args.func(args)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -21,7 +21,7 @@ class DetectionResult:
         image_path: Path,
         boxes: List[Tuple[int, int, int, int]],
         confidences: List[float],
-        count: int
+        count: int,
     ):
         """
         Initialize detection result.
@@ -49,10 +49,10 @@ class DetectionResult:
                     "y1": int(box[1]),
                     "x2": int(box[2]),
                     "y2": int(box[3]),
-                    "confidence": float(self.confidences[i])
+                    "confidence": float(self.confidences[i]),
                 }
                 for i, box in enumerate(self.boxes)
-            ]
+            ],
         }
 
 
@@ -72,7 +72,7 @@ class SwellingDetector:
         iou_threshold: float = 0.50,
         max_detections: int = 1000,
         imgsz: int = 1280,
-        augment: bool = True
+        augment: bool = True,
     ):
         """
         Initialize the detector.
@@ -105,9 +105,7 @@ class SwellingDetector:
             raise
 
     def detect_single(
-        self,
-        image_path: Union[str, Path],
-        verbose: bool = False
+        self, image_path: Union[str, Path], verbose: bool = False
     ) -> DetectionResult:
         """
         Detect swellings in a single image.
@@ -130,7 +128,7 @@ class SwellingDetector:
                 max_det=self.max_detections,
                 imgsz=self.imgsz,
                 augment=self.augment,
-                verbose=verbose
+                verbose=verbose,
             )[0]
 
             # Extract boxes and confidences
@@ -150,25 +148,17 @@ class SwellingDetector:
             )
 
             return DetectionResult(
-                image_path=image_path,
-                boxes=boxes,
-                confidences=confidences,
-                count=count
+                image_path=image_path, boxes=boxes, confidences=confidences, count=count
             )
 
         except Exception as e:
             logger.error(f"Detection failed for {image_path}: {e}")
             return DetectionResult(
-                image_path=image_path,
-                boxes=[],
-                confidences=[],
-                count=0
+                image_path=image_path, boxes=[], confidences=[], count=0
             )
 
     def detect_batch(
-        self,
-        image_paths: List[Union[str, Path]],
-        verbose: bool = False
+        self, image_paths: List[Union[str, Path]], verbose: bool = False
     ) -> List[DetectionResult]:
         """
         Detect swellings in multiple images.
@@ -193,7 +183,7 @@ class SwellingDetector:
         box_color: Tuple[int, int, int] = (0, 0, 255),
         box_thickness: int = 10,
         show_count: bool = True,
-        show_confidence: bool = False
+        show_confidence: bool = False,
     ) -> DetectionResult:
         """
         Detect swellings and save annotated image.
@@ -229,16 +219,13 @@ class SwellingDetector:
             color=box_color,
             thickness=box_thickness,
             confidences=result.confidences if show_confidence else None,
-            show_conf=show_confidence
+            show_conf=show_confidence,
         )
 
         # Add count label
         if show_count:
             annotated = add_count_label(
-                annotated,
-                result.count,
-                color=box_color,
-                thickness=box_thickness
+                annotated, result.count, color=box_color, thickness=box_thickness
             )
 
         # Save annotated image
@@ -250,7 +237,7 @@ class SwellingDetector:
         self,
         data_yaml: Optional[Union[str, Path]] = None,
         conf: Optional[float] = None,
-        iou: Optional[float] = None
+        iou: Optional[float] = None,
     ) -> Dict:
         """
         Run validation on test dataset.
@@ -274,7 +261,7 @@ class SwellingDetector:
                 max_det=self.max_detections,
                 imgsz=self.imgsz,
                 plots=True,
-                verbose=True
+                verbose=True,
             )
 
             results = {

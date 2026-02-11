@@ -11,7 +11,7 @@ def draw_boxes(
     color: Tuple[int, int, int] = (0, 0, 255),
     thickness: int = 10,
     confidences: Optional[List[float]] = None,
-    show_conf: bool = False
+    show_conf: bool = False,
 ) -> np.ndarray:
     """
     Draw bounding boxes on image.
@@ -39,10 +39,7 @@ def draw_boxes(
             font_scale = 1.0
             font_thick = 2
             (tw, th), _ = cv2.getTextSize(
-                conf_text,
-                cv2.FONT_HERSHEY_SIMPLEX,
-                font_scale,
-                font_thick
+                conf_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, font_thick
             )
             cv2.putText(
                 result,
@@ -52,7 +49,7 @@ def draw_boxes(
                 font_scale,
                 color,
                 font_thick,
-                lineType=cv2.LINE_AA
+                lineType=cv2.LINE_AA,
             )
 
     return result
@@ -66,7 +63,7 @@ def add_count_label(
     color: Tuple[int, int, int] = (0, 0, 255),
     font_scale: float = 3.0,
     thickness: int = 8,
-    margin: int = 10
+    margin: int = 10,
 ) -> np.ndarray:
     """
     Add swelling count label to image.
@@ -89,10 +86,7 @@ def add_count_label(
 
     # Get text size
     (text_width, text_height), baseline = cv2.getTextSize(
-        text,
-        cv2.FONT_HERSHEY_SIMPLEX,
-        font_scale,
-        thickness
+        text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
     )
 
     # Calculate position
@@ -122,7 +116,7 @@ def add_count_label(
         font_scale,
         color,
         thickness,
-        lineType=cv2.LINE_AA
+        lineType=cv2.LINE_AA,
     )
 
     return result
@@ -131,7 +125,7 @@ def add_count_label(
 def create_side_by_side(
     original: np.ndarray,
     annotated: np.ndarray,
-    labels: Tuple[str, str] = ("Original", "Detected")
+    labels: Tuple[str, str] = ("Original", "Detected"),
 ) -> np.ndarray:
     """
     Create side-by-side comparison of original and annotated images.

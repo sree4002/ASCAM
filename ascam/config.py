@@ -14,24 +14,24 @@ DEFAULT_CONFIG = {
         "image_size": [224, 224],
         "threshold": 0.5,
         "model_name": "efficientnet_b0",
-        "num_classes": 2
+        "num_classes": 2,
     },
     "detector": {
         "model_path": "models/yolov8s_best.pt",
         "conf_threshold": 0.25,
         "iou_threshold": 0.50,
-        "max_detections": 1000
+        "max_detections": 1000,
     },
     "visualization": {
         "box_color": [0, 0, 255],  # BGR: Red
         "box_thickness": 10,
         "show_count": True,
-        "show_confidence": False
+        "show_confidence": False,
     },
     "pipeline": {
         "skip_classification": False,
         "save_results": True,
-        "results_format": "json"
+        "results_format": "json",
     },
     "training": {
         "epochs": 50,
@@ -46,7 +46,7 @@ DEFAULT_CONFIG = {
         "label_smoothing": 0.1,
         "mixed_precision": True,
         "dropout": 0.3,
-        "seed": 42
+        "seed": 42,
     },
     "augmentation": {
         "rotation_limit": 45,
@@ -55,8 +55,8 @@ DEFAULT_CONFIG = {
         "brightness_limit": 0.2,
         "contrast_limit": 0.2,
         "normalize_mean": [0.485, 0.456, 0.406],
-        "normalize_std": [0.229, 0.224, 0.225]
-    }
+        "normalize_std": [0.229, 0.224, 0.225],
+    },
 }
 
 
@@ -73,7 +73,7 @@ class Config:
         self.config = config_dict or DEFAULT_CONFIG.copy()
 
     @classmethod
-    def from_yaml(cls, yaml_path: Union[str, Path]) -> 'Config':
+    def from_yaml(cls, yaml_path: Union[str, Path]) -> "Config":
         """
         Load configuration from YAML file.
 
@@ -85,13 +85,11 @@ class Config:
         """
         yaml_path = Path(yaml_path)
         if not yaml_path.exists():
-            logger.warning(
-                f"Config file {yaml_path} not found, using defaults"
-            )
+            logger.warning(f"Config file {yaml_path} not found, using defaults")
             return cls()
 
         try:
-            with open(yaml_path, 'r') as f:
+            with open(yaml_path, "r") as f:
                 config_dict = yaml.safe_load(f)
             logger.info(f"Loaded configuration from {yaml_path}")
             return cls(config_dict)
@@ -108,7 +106,7 @@ class Config:
         """
         yaml_path = Path(yaml_path)
         try:
-            with open(yaml_path, 'w') as f:
+            with open(yaml_path, "w") as f:
                 yaml.dump(self.config, f, default_flow_style=False)
             logger.info(f"Saved configuration to {yaml_path}")
         except Exception as e:
@@ -125,7 +123,7 @@ class Config:
         Returns:
             Configuration value
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self.config
 
         for k in keys:
@@ -146,7 +144,7 @@ class Config:
             key: Configuration key (supports dot notation)
             value: Value to set
         """
-        keys = key.split('.')
+        keys = key.split(".")
         config = self.config
 
         for k in keys[:-1]:
@@ -163,6 +161,7 @@ class Config:
         Args:
             updates: Dictionary with updates
         """
+
         def deep_update(base: Dict, updates: Dict) -> Dict:
             for key, value in updates.items():
                 if isinstance(value, dict) and key in base:

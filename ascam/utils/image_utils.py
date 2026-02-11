@@ -34,7 +34,7 @@ def preprocess_image(
     image: np.ndarray,
     target_size: Tuple[int, int] = (200, 200),
     normalize: bool = True,
-    to_rgb: bool = True
+    to_rgb: bool = True,
 ) -> np.ndarray:
     """
     Preprocess image for model inference.
@@ -100,9 +100,10 @@ def get_image_files(directory: Union[str, Path]) -> list:
         logger.error(f"Directory does not exist: {directory}")
         return []
 
-    supported_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
+    supported_extensions = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
     image_files = [
-        f for f in directory.iterdir()
+        f
+        for f in directory.iterdir()
         if f.is_file() and f.suffix.lower() in supported_extensions
     ]
 
