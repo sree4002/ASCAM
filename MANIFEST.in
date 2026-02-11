@@ -5,6 +5,3 @@ include pyproject.toml
 recursive-include configs *.yaml
 recursive-include ascam *.py
 exclude *.ipynb
-exclude Running_Code/*
-exclude Classification_Model/*
-exclude Object_Detection_Model/*

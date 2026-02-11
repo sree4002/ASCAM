@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+title: "ASCAM: Axonal Swelling Classification and Analysis Model"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - name: "ASCAM Team"
+version: 1.0.0
+date-released: "2024-01-01"
+license: MIT
+url: "https://github.com/sree4002/ASCAM"
+repository-code: "https://github.com/sree4002/ASCAM"
+keywords:
+  - deep-learning
+  - medical-imaging
+  - neuroscience
+  - axonal-swelling
+  - object-detection
+  - yolov8
+  - efficientnet
+  - histology
+  - alzheimers-disease
+abstract: >-
+  ASCAM is a two-stage deep learning pipeline for automated detection
+  and quantification of axonal swellings in DAB-stained histological
+  brain sections. Stage 1 uses an EfficientNet-B0 classifier to filter
+  images containing swellings. Stage 2 uses a YOLOv8s detector to
+  localize and count individual axonal swellings with bounding boxes.

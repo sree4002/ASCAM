@@ -13,23 +13,16 @@ cd ASCAM
 pip install -e .
 
 # This will install:
-# - TensorFlow (for classification)
+# - PyTorch, timm (for EfficientNet-B0 classification)
 # - Ultralytics YOLO (for detection)
-# - OpenCV, NumPy, and other dependencies
+# - OpenCV, NumPy, Pillow, and other dependencies
 ```
 
-## 2. Download Model Weights
+## 2. Model Weights
 
-Model files are located in the `Running_Code/` directory:
-- `Running_Code/best_model.keras` → Copy to `models/best_model.keras`
-- `Running_Code/weights.pt` → Copy to `models/weights.pt`
-
-```bash
-# Create models directory and copy weights
-mkdir -p models
-cp Running_Code/best_model.keras models/
-cp Running_Code/weights.pt models/
-```
+Model files should be in the `models/` directory:
+- `models/classifier.pt` -- EfficientNet-B0 classifier (PyTorch)
+- `models/yolov8s_best.pt` -- YOLOv8s detector
 
 ## 3. Run Your First Analysis
 
@@ -39,8 +32,8 @@ cp Running_Code/weights.pt models/
 ascam pipeline \
   --input test_images/ \
   --output results/ \
-  --classifier models/best_model.keras \
-  --detector models/weights.pt
+  --classifier models/classifier.pt \
+  --detector models/yolov8s_best.pt
 ```
 
 ### Option B: Detection Only (Faster)
@@ -51,7 +44,7 @@ If you know your images contain swellings, skip classification:
 ascam detect \
   --input test_images/ \
   --output results/ \
-  --model models/weights.pt
+  --model models/yolov8s_best.pt
 ```
 
 ### Option C: Python API
@@ -61,8 +54,8 @@ from ascam import ASCAMPipeline
 
 # Initialize pipeline
 pipeline = ASCAMPipeline(
-    classifier_path="models/best_model.keras",
-    detector_path="models/weights.pt"
+    classifier_path="models/classifier.pt",
+    detector_path="models/yolov8s_best.pt"
 )
 
 # Process images
@@ -103,8 +96,8 @@ ascam pipeline --input test_images/ --output results/ --config my_config.yaml
 ## Common Options
 
 ```bash
-# Adjust detection confidence threshold (lower = more detections)
-ascam pipeline ... --conf 0.01
+# Adjust detection confidence threshold
+ascam pipeline ... --conf 0.25
 
 # Skip classification (faster, less filtering)
 ascam pipeline ... --skip-classify
@@ -119,13 +112,23 @@ ascam detect ... --show-conf
 ascam pipeline ... --verbose
 ```
 
+## Training
+
+```bash
+# Train CNN classifier (EfficientNet-B0 with Focal Loss)
+ascam train-cnn --data data/classifier/ --epochs 50 --output models/
+
+# Train YOLO detector (paper-compliant parameters)
+ascam train-yolo --data data/detection/data.yaml --epochs 500 --output models/
+```
+
 ## Troubleshooting
 
-**Problem:** `ModuleNotFoundError: No module named 'tensorflow'`
+**Problem:** `ModuleNotFoundError: No module named 'torch'`
 **Solution:** Run `pip install -e .` again
 
 **Problem:** Model files not found
-**Solution:** Copy model files from `Running_Code/` to `models/` directory
+**Solution:** Ensure `models/classifier.pt` and `models/yolov8s_best.pt` exist
 
 **Problem:** Out of memory
 **Solution:** Process images in smaller batches or use a machine with more RAM
@@ -136,7 +139,7 @@ ascam pipeline ... --verbose
 ## Next Steps
 
 - Read the full [README.md](README.md) for detailed documentation
-- Check example notebooks in `Running_Code/` for Colab usage
+- Run `bash scripts/reproduce.sh` for full reproducibility
 - Adjust detection thresholds in config file for your specific use case
 - Export results to CSV for analysis in Excel/R/Python
 

@@ -58,18 +58,21 @@ class DetectionResult:
 
 class SwellingDetector:
     """
-    YOLO-based object detector for localizing axonal swellings.
+    YOLOv8s-based object detector for localizing axonal swellings.
 
     This model performs the second stage of the ASCAM pipeline by detecting
-    and counting individual swellings in images.
+    and counting individual swellings in images. Uses imgsz=1280 for
+    high-resolution inference and test-time augmentation (TTA) by default.
     """
 
     def __init__(
         self,
         model_path: Union[str, Path],
-        conf_threshold: float = 0.02,
-        iou_threshold: float = 0.30,
-        max_detections: int = 1000
+        conf_threshold: float = 0.25,
+        iou_threshold: float = 0.50,
+        max_detections: int = 1000,
+        imgsz: int = 1280,
+        augment: bool = True
     ):
         """
         Initialize the detector.
@@ -79,11 +82,15 @@ class SwellingDetector:
             conf_threshold: Confidence threshold for detections
             iou_threshold: IOU threshold for NMS
             max_detections: Maximum number of detections per image
+            imgsz: Inference image size (default: 1280)
+            augment: Enable test-time augmentation (default: True)
         """
         self.model_path = Path(model_path)
         self.conf_threshold = conf_threshold
         self.iou_threshold = iou_threshold
         self.max_detections = max_detections
+        self.imgsz = imgsz
+        self.augment = augment
         self.model = None
 
         self._load_model()
@@ -121,6 +128,8 @@ class SwellingDetector:
                 conf=self.conf_threshold,
                 iou=self.iou_threshold,
                 max_det=self.max_detections,
+                imgsz=self.imgsz,
+                augment=self.augment,
                 verbose=verbose
             )[0]
 
@@ -263,6 +272,7 @@ class SwellingDetector:
                 conf=conf,
                 iou=iou,
                 max_det=self.max_detections,
+                imgsz=self.imgsz,
                 plots=True,
                 verbose=True
             )

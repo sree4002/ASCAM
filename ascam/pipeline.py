@@ -27,15 +27,15 @@ class ASCAMPipeline:
         classifier_path: Union[str, Path],
         detector_path: Union[str, Path],
         classifier_threshold: float = 0.5,
-        detector_conf: float = 0.02,
-        detector_iou: float = 0.30,
+        detector_conf: float = 0.25,
+        detector_iou: float = 0.50,
         skip_classification: bool = False
     ):
         """
         Initialize the ASCAM pipeline.
 
         Args:
-            classifier_path: Path to classification model (.keras)
+            classifier_path: Path to classification model (.pt)
             detector_path: Path to detection model (.pt)
             classifier_threshold: Classification threshold
             detector_conf: Detection confidence threshold

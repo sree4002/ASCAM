@@ -10,14 +10,16 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = {
     "classifier": {
-        "model_path": "models/best_model.keras",
-        "image_size": [200, 200],
-        "threshold": 0.5
+        "model_path": "models/classifier.pt",
+        "image_size": [224, 224],
+        "threshold": 0.5,
+        "model_name": "efficientnet_b0",
+        "num_classes": 2
     },
     "detector": {
-        "model_path": "models/weights.pt",
-        "conf_threshold": 0.02,
-        "iou_threshold": 0.30,
+        "model_path": "models/yolov8s_best.pt",
+        "conf_threshold": 0.25,
+        "iou_threshold": 0.50,
         "max_detections": 1000
     },
     "visualization": {
@@ -30,6 +32,30 @@ DEFAULT_CONFIG = {
         "skip_classification": False,
         "save_results": True,
         "results_format": "json"
+    },
+    "training": {
+        "epochs": 50,
+        "batch_size": 32,
+        "learning_rate": 1e-4,
+        "weight_decay": 0.01,
+        "warmup_epochs": 5,
+        "patience": 10,
+        "use_focal_loss": True,
+        "focal_alpha": 0.25,
+        "focal_gamma": 2.0,
+        "label_smoothing": 0.1,
+        "mixed_precision": True,
+        "dropout": 0.3,
+        "seed": 42
+    },
+    "augmentation": {
+        "rotation_limit": 45,
+        "horizontal_flip": True,
+        "vertical_flip": False,
+        "brightness_limit": 0.2,
+        "contrast_limit": 0.2,
+        "normalize_mean": [0.485, 0.456, 0.406],
+        "normalize_std": [0.229, 0.224, 0.225]
     }
 }
 

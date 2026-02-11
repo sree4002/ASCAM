@@ -137,8 +137,8 @@ def cmd_pipeline(args):
         classifier_path=config.get('classifier.model_path'),
         detector_path=config.get('detector.model_path'),
         classifier_threshold=config.get('classifier.threshold', 0.5),
-        detector_conf=args.conf if args.conf else config.get('detector.conf_threshold', 0.02),
-        detector_iou=args.iou if args.iou else config.get('detector.iou_threshold', 0.30),
+        detector_conf=args.conf if args.conf else config.get('detector.conf_threshold', 0.25),
+        detector_iou=args.iou if args.iou else config.get('detector.iou_threshold', 0.50),
         skip_classification=config.get('pipeline.skip_classification', False)
     )
 
@@ -170,6 +170,61 @@ def cmd_config(args):
     logger.info(f"Default configuration created at: {output_path}")
 
 
+def cmd_train_cnn(args):
+    """Train CNN classifier."""
+    setup_logging(args.verbose)
+    logger = logging.getLogger(__name__)
+
+    from ascam.training.train_cnn import Trainer, create_model
+    from ascam.utils.reproducibility import set_seed
+
+    set_seed(args.seed)
+
+    logger.info("Starting CNN training...")
+
+    # Create model
+    model = create_model(
+        model_name=args.model_name,
+        num_classes=2,
+        pretrained=True,
+        dropout=args.dropout
+    )
+
+    # Create trainer and train
+    trainer = Trainer(
+        model=model,
+        data_dir=args.data,
+        output_dir=args.output,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.lr,
+        use_focal_loss=True,
+        device=args.device
+    )
+    trainer.train()
+
+
+def cmd_train_yolo(args):
+    """Train YOLO detector."""
+    setup_logging(args.verbose)
+    logger = logging.getLogger(__name__)
+
+    from ascam.training.train_yolo import train_yolo
+    from ascam.utils.reproducibility import set_seed
+
+    set_seed(args.seed)
+
+    logger.info("Starting YOLO training...")
+
+    train_yolo(
+        data_yaml=args.data,
+        output_dir=args.output,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        device=args.device
+    )
+
+
 def main():
     """Main entry point for CLI."""
     parser = argparse.ArgumentParser(
@@ -178,16 +233,22 @@ def main():
         epilog="""
 Examples:
   # Run full pipeline
-  ascam pipeline --input images/ --output results/ --classifier models/best_model.keras --detector models/weights.pt
+  ascam pipeline --input images/ --output results/ --classifier models/classifier.pt --detector models/yolov8s_best.pt
 
   # Run classification only
-  ascam classify --input images/ --model models/best_model.keras
+  ascam classify --input images/ --model models/classifier.pt
 
   # Run detection only
-  ascam detect --input images/ --output results/ --model models/weights.pt
+  ascam detect --input images/ --output results/ --model models/yolov8s_best.pt
 
   # Generate default config
   ascam config --output config.yaml
+
+  # Train CNN classifier
+  ascam train-cnn --data data/classifier/ --epochs 50 --output models/
+
+  # Train YOLO detector
+  ascam train-yolo --data data/detection/data.yaml --epochs 500 --output models/
         """
     )
 
@@ -208,7 +269,7 @@ Examples:
     classify_parser.add_argument(
         '--model', '-m',
         required=True,
-        help='Path to classification model (.keras)'
+        help='Path to classification model (.pt)'
     )
     classify_parser.add_argument(
         '--threshold', '-t',
@@ -246,14 +307,14 @@ Examples:
     detect_parser.add_argument(
         '--conf',
         type=float,
-        default=0.02,
-        help='Confidence threshold (default: 0.02)'
+        default=0.25,
+        help='Confidence threshold (default: 0.25)'
     )
     detect_parser.add_argument(
         '--iou',
         type=float,
-        default=0.30,
-        help='IOU threshold for NMS (default: 0.30)'
+        default=0.50,
+        help='IOU threshold for NMS (default: 0.50)'
     )
     detect_parser.add_argument(
         '--max-det',
@@ -354,6 +415,113 @@ Examples:
         help='Enable verbose output'
     )
     config_parser.set_defaults(func=cmd_config)
+
+    # Train CNN command
+    train_cnn_parser = subparsers.add_parser(
+        'train-cnn',
+        help='Train CNN classifier (EfficientNet-B0)'
+    )
+    train_cnn_parser.add_argument(
+        '--data', '-d',
+        required=True,
+        help='Path to classifier training data directory'
+    )
+    train_cnn_parser.add_argument(
+        '--output', '-o',
+        default='models/',
+        help='Output directory for trained model (default: models/)'
+    )
+    train_cnn_parser.add_argument(
+        '--epochs', '-e',
+        type=int,
+        default=50,
+        help='Number of training epochs (default: 50)'
+    )
+    train_cnn_parser.add_argument(
+        '--batch-size', '-b',
+        type=int,
+        default=32,
+        help='Batch size (default: 32)'
+    )
+    train_cnn_parser.add_argument(
+        '--lr',
+        type=float,
+        default=1e-4,
+        help='Learning rate (default: 0.0001)'
+    )
+    train_cnn_parser.add_argument(
+        '--dropout',
+        type=float,
+        default=0.3,
+        help='Dropout rate (default: 0.3)'
+    )
+    train_cnn_parser.add_argument(
+        '--model-name',
+        default='efficientnet_b0',
+        help='timm model name (default: efficientnet_b0)'
+    )
+    train_cnn_parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='Random seed (default: 42)'
+    )
+    train_cnn_parser.add_argument(
+        '--device',
+        default=None,
+        help='Device to use (default: auto-detect)'
+    )
+    train_cnn_parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+    train_cnn_parser.set_defaults(func=cmd_train_cnn)
+
+    # Train YOLO command
+    train_yolo_parser = subparsers.add_parser(
+        'train-yolo',
+        help='Train YOLO detector (YOLOv8s)'
+    )
+    train_yolo_parser.add_argument(
+        '--data', '-d',
+        required=True,
+        help='Path to data.yaml for YOLO training'
+    )
+    train_yolo_parser.add_argument(
+        '--output', '-o',
+        default='models/',
+        help='Output directory for trained model (default: models/)'
+    )
+    train_yolo_parser.add_argument(
+        '--epochs', '-e',
+        type=int,
+        default=500,
+        help='Number of training epochs (default: 500)'
+    )
+    train_yolo_parser.add_argument(
+        '--batch-size', '-b',
+        type=int,
+        default=16,
+        help='Batch size (default: 16)'
+    )
+    train_yolo_parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='Random seed (default: 42)'
+    )
+    train_yolo_parser.add_argument(
+        '--device',
+        default=None,
+        help='Device to use (default: auto-detect)'
+    )
+    train_yolo_parser.add_argument(
+        '--verbose', '-v',
+        action='store_true',
+        help='Enable verbose output'
+    )
+    train_yolo_parser.set_defaults(func=cmd_train_yolo)
 
     # Parse arguments
     args = parser.parse_args()

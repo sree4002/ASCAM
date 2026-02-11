@@ -4,33 +4,28 @@ This directory contains the trained model weights for ASCAM.
 
 ## Required Files
 
-1. **best_model.keras** (162 MB)
-   - Binary classification model
+1. **classifier.pt** (16 MB)
+   - EfficientNet-B0 binary classification model
    - Detects presence/absence of axonal swellings
-   - Built with TensorFlow/Keras
+   - Built with PyTorch + timm
 
-2. **weights.pt** (22.5 MB)
-   - YOLOv8 object detection model
+2. **yolov8s_best.pt** (23 MB)
+   - YOLOv8s object detection model
    - Localizes individual axonal swellings
    - Built with Ultralytics YOLO
 
-## Download Instructions
-
-If these files are not already present, you can find them in the repository:
-- Location in repo: `Running_Code/best_model.keras` and `Running_Code/weights.pt`
-- Or download from Git LFS if configured
-
 ## Model Information
 
-### Classification Model
-- Input size: 200x200 RGB images
-- Architecture: CNN with batch normalization
-- Output: Binary (swelling/no swelling)
-- Training epochs: 100 (with early stopping)
+### Classification Model (classifier.pt)
+- Input size: 224x224 RGB images
+- Architecture: EfficientNet-B0 (transfer learning)
+- Output: 2-class softmax (no_swelling, swelling)
+- Training: Focal Loss, AdamW, OneCycleLR
 
-### Detection Model
-- Input size: 640x640 (auto-resized)
-- Architecture: YOLOv8n
-- Training epochs: 500
-- Class: "swellings" (single class)
-- Confidence threshold: 0.02 (default)
+### Detection Model (yolov8s_best.pt)
+- Input size: 1280x1280
+- Architecture: YOLOv8s
+- Inference: Test-time augmentation (TTA) enabled
+- Training: 500 epochs, mosaic disabled, AdamW
+- Class: "swelling" (single class)
+- Default thresholds: conf=0.25, iou=0.50

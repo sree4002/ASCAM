@@ -85,13 +85,12 @@ def save_image(image: np.ndarray, output_path: Union[str, Path]) -> bool:
         return False
 
 
-def get_image_files(directory: Union[str, Path], extensions: tuple = ('.jpg', '.jpeg', '.png', '.JPG', '.JPEG', '.PNG')) -> list:
+def get_image_files(directory: Union[str, Path]) -> list:
     """
-    Get all image files from a directory.
+    Get all image files from a directory using case-insensitive extension matching.
 
     Args:
         directory: Directory to search
-        extensions: Valid image file extensions
 
     Returns:
         List of Path objects for image files
@@ -101,8 +100,10 @@ def get_image_files(directory: Union[str, Path], extensions: tuple = ('.jpg', '.
         logger.error(f"Directory does not exist: {directory}")
         return []
 
-    image_files = []
-    for ext in extensions:
-        image_files.extend(directory.glob(f"*{ext}"))
+    supported_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tif', '.tiff'}
+    image_files = [
+        f for f in directory.iterdir()
+        if f.is_file() and f.suffix.lower() in supported_extensions
+    ]
 
     return sorted(image_files)
