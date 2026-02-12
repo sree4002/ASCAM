@@ -15,7 +15,7 @@ import json
 import logging
 import argparse
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -191,7 +191,7 @@ def evaluate_classifier(
         "false_negatives": int(fn),
     }
 
-    logger.info(f"Classifier Evaluation:")
+    logger.info("Classifier Evaluation:")
     logger.info(f"  Accuracy:  {accuracy*100:.2f}%")
     logger.info(f"  Precision: {precision*100:.2f}%")
     logger.info(f"  Recall:    {recall*100:.2f}%")

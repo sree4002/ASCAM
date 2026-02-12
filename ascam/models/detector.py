@@ -1,8 +1,6 @@
 """Object detection model for localizing axonal swellings."""
 
 import logging
-import cv2
-import numpy as np
 from pathlib import Path
 from typing import Union, List, Dict, Tuple, Optional
 from ultralytics import YOLO

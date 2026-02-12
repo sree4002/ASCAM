@@ -20,7 +20,6 @@ from pathlib import Path
 from datetime import datetime
 
 import torch
-import numpy as np
 from ultralytics import YOLO
 
 logger = logging.getLogger(__name__)
@@ -103,17 +102,17 @@ def train_yolo(
 
     logger.info("Training Configuration:")
     logger.info(f"  Model:      {model_name}")
-    logger.info(f"  imgsz:      1280")
+    logger.info("  imgsz:      1280")
     logger.info(f"  Epochs:     {epochs}")
     logger.info(f"  Batch:      {batch_size}")
-    logger.info(f"  Conf:       0.25")
-    logger.info(f"  IoU:        0.50")
-    logger.info(f"  Mosaic:     OFF (histology)")
-    logger.info(f"  Degrees:    15")
+    logger.info("  Conf:       0.25")
+    logger.info("  IoU:        0.50")
+    logger.info("  Mosaic:     OFF (histology)")
+    logger.info("  Degrees:    15")
     logger.info(f"  Device:     {device}")
 
     # Train
-    results = model.train(**train_args)
+    model.train(**train_args)
 
     # Copy best model to output directory
     best_model_path = output_dir / "yolo_training" / "train" / "weights" / "best.pt"
@@ -136,7 +135,7 @@ def train_yolo(
         "iou_threshold": 0.50,
     }
 
-    logger.info(f"\nTest Results:")
+    logger.info("\nTest Results:")
     logger.info(f"  mAP@50:     {metrics['mAP50']*100:.2f}%")
     logger.info(f"  mAP@50-95:  {metrics['mAP50-95']*100:.2f}%")
     logger.info(f"  Precision:  {metrics['precision']*100:.2f}%")

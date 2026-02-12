@@ -105,7 +105,7 @@ def cmd_detect(args):
         )
         total_swellings += result.count
 
-    logger.info(f"\nDetection complete!")
+    logger.info("\nDetection complete!")
     logger.info(f"Total swellings detected: {total_swellings}")
     logger.info(f"Results saved to: {output_dir}")
 
