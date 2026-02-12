@@ -213,7 +213,7 @@ class SwellingClassifier:
         results = []
 
         for i in range(0, len(image_paths), batch_size):
-            chunk_paths = image_paths[i:i + batch_size]
+            chunk_paths = image_paths[i : i + batch_size]
             tensors = []
             valid_indices = []
 
