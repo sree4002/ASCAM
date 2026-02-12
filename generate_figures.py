@@ -88,7 +88,11 @@ def reconstruct_test_set():
         range(n), [n_train, n_val, n - n_train - n_val], generator=generator
     )
 
-    test_files = {full_dataset.images[i].name for i in test_idx.indices}
+    data_path = Path(DATA_DIR)
+    test_files = {
+        str(full_dataset.images[i].relative_to(data_path))
+        for i in test_idx.indices
+    }
     val_transform = get_transforms(is_train=False)
     test_dataset = SwellingDataset(DATA_DIR, transform=val_transform, split_files=test_files)
     return test_dataset

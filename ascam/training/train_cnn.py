@@ -99,7 +99,11 @@ class SwellingDataset(Dataset):
             ]
 
             if split_files is not None:
-                files = [f for f in files if f.name in split_files]
+                files = [
+                    f
+                    for f in files
+                    if str(f.relative_to(self.data_dir)) in split_files
+                ]
 
             self.images.extend(files)
             self.labels.extend([label] * len(files))
@@ -231,9 +235,19 @@ class Trainer:
         )
 
         # Create split-specific datasets
-        train_files = {full_dataset.images[i].name for i in train_idx.indices}
-        val_files = {full_dataset.images[i].name for i in val_idx.indices}
-        test_files = {full_dataset.images[i].name for i in test_idx.indices}
+        data_path = Path(data_dir)
+        train_files = {
+            str(full_dataset.images[i].relative_to(data_path))
+            for i in train_idx.indices
+        }
+        val_files = {
+            str(full_dataset.images[i].relative_to(data_path))
+            for i in val_idx.indices
+        }
+        test_files = {
+            str(full_dataset.images[i].relative_to(data_path))
+            for i in test_idx.indices
+        }
 
         train_dataset = SwellingDataset(
             data_dir, transform=train_transform, split_files=train_files
