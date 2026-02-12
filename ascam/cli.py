@@ -136,12 +136,12 @@ def cmd_pipeline(args):
         classifier_path=config.get("classifier.model_path"),
         detector_path=config.get("detector.model_path"),
         classifier_threshold=config.get("classifier.threshold", 0.5),
-        detector_conf=args.conf
-        if args.conf
-        else config.get("detector.conf_threshold", 0.25),
-        detector_iou=args.iou
-        if args.iou
-        else config.get("detector.iou_threshold", 0.50),
+        detector_conf=(
+            args.conf if args.conf else config.get("detector.conf_threshold", 0.25)
+        ),
+        detector_iou=(
+            args.iou if args.iou else config.get("detector.iou_threshold", 0.50)
+        ),
         skip_classification=config.get("pipeline.skip_classification", False),
     )
 
